@@ -1,0 +1,28 @@
+version: '2.4'
+services:
+  ffmpeg:
+    image: {{registry}}/vcp/ffmpeg:python-s3-2
+    build: ./build
+    environment:
+      BUCKET: {{s3_bucket}}
+    env_file:
+      - .env
+    devices:
+      - /dev/fuse
+    cap_add:
+      - mknod
+      - sys_admin
+    security_opt:
+      - apparmor:unconfined
+    init: true
+    tty: true
+    volumes:
+      - ./scripts/make_video.py:/tmp/workdir/make_video.py
+      - ./output:/tmp/result
+    command: 
+      - ./make_video.py
+{% if script_opts is defined %}
+{%for ent in script_opts %}
+      - "{{ent}}"
+{% endfor %}
+{% endif %}

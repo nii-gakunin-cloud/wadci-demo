@@ -1,0 +1,91 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import argparse
+from kafka import KafkaProducer
+import cv2
+import time
+from queue import Queue
+from math import modf
+
+
+QUEUE_SIZE = 20
+
+
+def setup_parameters():
+    global sleep_time_1, sampling_freq, sleep_time_q, frame_rate
+    video = cv2.VideoCapture(input_video)
+    fps = video.get(cv2.CAP_PROP_FPS)
+    video.release()
+    if frame_rate <= 0.0:
+        frame_rate = fps
+
+    sleep_time_1 = 1.0 / frame_rate
+    sleep_time_q = sleep_time_1 * (QUEUE_SIZE + 1)
+
+    if sampling_rate > 0.0:
+        sampling_freq = sampling_rate / fps
+    else:
+        sampling_freq = 1.0
+
+
+def image_send():
+    producer = KafkaProducer(bootstrap_servers=bootstrap_servers)
+    video = cv2.VideoCapture(input_video)
+    q = Queue(QUEUE_SIZE + 1)
+
+    threshold = 0.0
+    while(video.isOpened()):
+        success, frame = video.read()
+        # Ensure file was read successfully
+        if not success:
+            print("bad read!")
+            break
+
+        threshold += sampling_freq
+        if threshold < 1.0:
+            continue
+        else:
+            threshold, _ = modf(threshold)
+
+        # Convert image to png
+        ret, buffer = cv2.imencode('.jpg', frame)
+
+        # Convert to bytes and send to kafka
+        producer.send(topic, buffer.tobytes())
+
+        time1 = time.perf_counter()
+        q.put(time1)
+        if q.full():
+            time0 = q.get()
+            sleep_time = sleep_time_q - time1 + time0
+        else:
+            sleep_time = sleep_time_1
+        time.sleep(sleep_time)
+
+    video.release()
+
+
+def main():
+    setup_parameters()
+    image_send()
+
+
+def parse_args():
+    global bootstrap_servers
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-i', '--input-video', required=True)
+    parser.add_argument(
+        '-t', '--topic', default='distributed-video1', dest='topic')
+    parser.add_argument(
+        '-b', '--brokers', default='kafka0:9092,kafka1:9092,kafka2:9092')
+    parser.add_argument('-r', '--frame-rate', type=float, default=-1.0)
+    parser.add_argument('-S', '--sampling-rate', type=float, default=-1.0)
+
+    globals().update(vars(parser.parse_args()))
+    bootstrap_servers = brokers.split(',')
+
+
+if __name__ == '__main__':
+    parse_args()
+    main()

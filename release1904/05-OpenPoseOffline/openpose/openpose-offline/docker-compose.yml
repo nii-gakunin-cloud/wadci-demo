@@ -1,0 +1,33 @@
+version: "2.4"
+services:
+  openpose:
+    image: {{registry}}/vcp/openpose:cuda-python-s3
+    build: ./build
+    runtime: nvidia
+    environment:
+      BUCKET: {{s3_bucket}}
+    env_file:
+      - .env
+    devices:
+      - /dev/fuse
+    cap_add:
+      - MKNOD
+      - SYS_ADMIN
+    security_opt:
+      - apparmor:unconfined
+    init: true
+    volumes:
+      - ./scripts/fs-openpose.py:/root/fs-openpose.py
+    command: 
+      - /root/fs-openpose.py
+{% if script_opts is defined %}
+{%for ent in script_opts %}
+      - "{{ent}}"
+{% endfor %}
+{% endif %}
+{% if kafka_hosts is defined %}
+    extra_hosts:
+{%for ent in kafka_hosts %}
+      - {{ent}}
+{% endfor %}
+{% endif %}

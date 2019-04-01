@@ -1,0 +1,23 @@
+version: "2.4"
+services:
+  openpose:
+    image: {{registry}}/vcp/openpose:cuda-python
+    build: ./build
+    runtime: nvidia
+    volumes:
+      - ./scripts/kafka-openpose.py:/root/kafka-openpose.py
+    init: true
+    command:
+      - /root/kafka-openpose.py
+{% if script_opts is defined %}
+{%for ent in script_opts %}
+      - {{ent}}
+{% endfor %}
+{% endif %}
+    tty: true
+{% if kafka_hosts is defined %}
+    extra_hosts:
+{%for ent in kafka_hosts %}
+      - {{ent}}
+{% endfor %}
+{% endif %}
