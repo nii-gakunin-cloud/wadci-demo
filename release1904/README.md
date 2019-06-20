@@ -2,6 +2,7 @@
 
 * 00-Kafka/
   - 00-001-ノードの起動.ipynb
+  - 00-002-既存ノードの登録.ipynb
   - 00-101-Apache Kafkaのセットアップ.ipynb
   - 00-111-Kafka Connectのセットアップ.ipynb
   - 00-112-S3コネクタの登録.ipynb
@@ -14,6 +15,7 @@
   - startup.sh
 * 02-JupyterNotebook画像出力/
   - animation_consumer-tokushima_camera.ipynb
+  - KafkaVideoViewer.py
 * 03-YOLOStream/
   - README.txt
   - realtime_demo.py
@@ -35,4 +37,5 @@
 * 06-Producer/
   - 06-101-動画から画像を切り出してKafkaに送る.ipynb
   - scripts/image-sender
-* readme.md
+* README.md
+* LICENSE.txt
